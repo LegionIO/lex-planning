@@ -5,3 +5,5 @@ gemspec
 
 gem 'rspec', '~> 3.12'
 gem 'rubocop', '~> 1.75'
+
+gem 'legion-gaia', path: '../../legion-gaia'
