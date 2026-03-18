@@ -213,5 +213,27 @@ RSpec.describe Legion::Extensions::Planning::Runners::Planning do
       result = host.update_planning(tick_results: {})
       expect(result[:stale_checked]).to be true
     end
+
+    it 'only advances steps for top PLANNING_HORIZON plans by priority' do
+      horizon = Legion::Extensions::Planning::Helpers::Constants::PLANNING_HORIZON
+      plans = (horizon + 3).times.map do |i|
+        store.create_plan(goal: "plan_#{i}", steps: [{ action: :"action_#{i}" }], priority: :low)
+      end
+      high_plan = store.create_plan(goal: 'high', steps: [{ action: :high_action }], priority: :critical)
+
+      tick_results = {
+        action_selection: {
+          completed_actions: [{ action: :high_action, result: 'ok' }] +
+                             plans.map { |p| { action: p.steps.first.action, result: 'ok' } }
+        }
+      }
+      host.update_planning(tick_results: tick_results)
+
+      expect(high_plan.steps.first.status).to eq(:completed)
+
+      beyond_horizon = plans.last(3)
+      advanced_count = beyond_horizon.count { |p| p.steps.first.status == :completed }
+      expect(advanced_count).to be < 3
+    end
   end
 end

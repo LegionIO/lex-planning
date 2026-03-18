@@ -13,6 +13,10 @@ module Legion
           end
 
           def create_plan(goal:, steps: [], priority: :medium, contingencies: {}, parent_plan_id: nil, **)
+            return { error: "steps exceed limit (#{Constants::MAX_STEPS_PER_PLAN})" } if steps.size > Constants::MAX_STEPS_PER_PLAN
+
+            return { error: "contingencies exceed limit (#{Constants::MAX_CONTINGENCIES})" } if contingencies.size > Constants::MAX_CONTINGENCIES
+
             step_objects = steps.map do |s|
               s.is_a?(PlanStep) ? s : PlanStep.new(**s)
             end

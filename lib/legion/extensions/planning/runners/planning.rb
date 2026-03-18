@@ -91,8 +91,14 @@ module Legion
             @plan_store ||= Helpers::PlanStore.new
           end
 
+          def prioritized_plans
+            plan_store.plans_by_priority
+                      .select { |p| %i[active executing].include?(p.status) }
+                      .first(Helpers::Constants::PLANNING_HORIZON)
+          end
+
           def check_stale_plans
-            plan_store.active_plans.each do |plan|
+            prioritized_plans.each do |plan|
               Legion::Logging.warn "[planning] stale plan detected plan=#{plan.id} goal=#{plan.goal}" if plan.stale?
             end
           end
@@ -101,7 +107,7 @@ module Legion
             completed_actions = tick_results.dig(:action_selection, :completed_actions)
             return unless completed_actions.is_a?(Array)
 
-            plan_store.active_plans.each do |plan|
+            prioritized_plans.each do |plan|
               ready_ids = plan.completed_step_ids
               plan.steps.each do |step|
                 next unless step.status == :pending && step.ready?(ready_ids)

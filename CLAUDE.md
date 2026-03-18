@@ -3,7 +3,7 @@
 **Level 3 Leaf Documentation**
 - **Parent**: `/Users/miverso2/rubymine/legion/extensions-agentic/CLAUDE.md`
 - **Gem**: `lex-planning`
-- **Version**: 0.1.0
+- **Version**: 0.1.1
 - **Namespace**: `Legion::Extensions::Planning`
 
 ## Purpose
@@ -90,4 +90,6 @@ In-memory `@plans` hash + `@plan_history` array. `create_plan` converts step has
 - `plans_by_priority` uses `PRIORITIES` hash with fallback to 0.5 for unknown priority symbols
 - `plan_progress` can retrieve archived plans from `@plan_history` by linear search
 - `update_planning` uses `tick_results.dig(:action_selection, :completed_actions)` — returns early if not an Array
+- `update_planning` scopes stale checks and auto-advance to `PLANNING_HORIZON` (10) highest-priority plans per tick
+- `create_plan` rejects steps arrays exceeding `MAX_STEPS_PER_PLAN` (100) and contingency hashes exceeding `MAX_CONTINGENCIES` (20)
 - All state is in-memory; reset on process restart

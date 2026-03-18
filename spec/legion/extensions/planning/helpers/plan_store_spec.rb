@@ -61,6 +61,38 @@ RSpec.describe Legion::Extensions::Planning::Helpers::PlanStore do
       plan = store.create_plan(goal: 'sub', parent_plan_id: 'parent-id')
       expect(plan.parent_plan_id).to eq('parent-id')
     end
+
+    it 'rejects when steps exceed MAX_STEPS_PER_PLAN' do
+      oversized = Array.new(Legion::Extensions::Planning::Helpers::Constants::MAX_STEPS_PER_PLAN + 1) do |i|
+        { action: :"step_#{i}" }
+      end
+      result = store.create_plan(goal: 'too many steps', steps: oversized)
+      expect(result[:error]).to include('steps exceed limit')
+    end
+
+    it 'rejects when contingencies exceed MAX_CONTINGENCIES' do
+      oversized = (1..(Legion::Extensions::Planning::Helpers::Constants::MAX_CONTINGENCIES + 1)).to_h do |i|
+        [:"action_#{i}", :retry]
+      end
+      result = store.create_plan(goal: 'too many contingencies', contingencies: oversized)
+      expect(result[:error]).to include('contingencies exceed limit')
+    end
+
+    it 'accepts steps at exactly MAX_STEPS_PER_PLAN' do
+      exact = Array.new(Legion::Extensions::Planning::Helpers::Constants::MAX_STEPS_PER_PLAN) do |i|
+        { action: :"step_#{i}" }
+      end
+      plan = store.create_plan(goal: 'max steps', steps: exact)
+      expect(plan).to be_a(Legion::Extensions::Planning::Helpers::Plan)
+    end
+
+    it 'accepts contingencies at exactly MAX_CONTINGENCIES' do
+      exact = (1..Legion::Extensions::Planning::Helpers::Constants::MAX_CONTINGENCIES).to_h do |i|
+        [:"action_#{i}", :retry]
+      end
+      plan = store.create_plan(goal: 'max contingencies', contingencies: exact)
+      expect(plan).to be_a(Legion::Extensions::Planning::Helpers::Plan)
+    end
   end
 
   describe '#find_plan' do
